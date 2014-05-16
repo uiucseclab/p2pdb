@@ -50,6 +50,9 @@ Testing Server
 See test_server.py for a simple test script to post a message.  You can then retrieve the message by sending a GET request to
 [p2pdb URL]/get/?seconds_since=10000 (to get all messages in the last 10000 seconds, for other parameters see "Technical Information")
 
+If you run the current test_server.py, you will see how it appears both on http://suryathe.chickenkiller.com:6900/get/?seconds_since=100 and http://suryathe.chickenkiller.com:5000/get/?seconds_since=100
+(automatic mirroring across nodes)
+
 Client Implementations
 ==============
 
