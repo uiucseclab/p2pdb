@@ -30,4 +30,4 @@ DATABASE_PATH = 'messages.db'
 # ---------------------------------------------------------
 HASHCASH_BITS_REQUIRED = 21
 NUM_BUCKETS = 50000
-DEBUG = True
+DEBUG = False
