@@ -1,0 +1,1 @@
+{ 'http': 'http://suryathe.chickenkiller.com:5000/','tor' : 'http://example.onion'}||*
