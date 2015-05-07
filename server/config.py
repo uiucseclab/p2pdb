@@ -13,8 +13,8 @@ LISTEN_GLOBALLY = True
 # Any transport protocol supporting HTTP can be used, but current clients
 # support only url and tor as keys for standard URL and .onion resource
 # locatiors
-LOCATORS = { 'http': 'http://suryathe.chickenkiller.com:5000/',
-    'tor' : 'http://example.onion'
+LOCATORS = {
+    'tor' : 'http://hjc7rbogwpbbx7q4.onion:5000',
 }
 
 # List of table keys allowed to be mirrored on this database

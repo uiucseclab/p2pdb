@@ -5,7 +5,25 @@ from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Hash import SHA
 from flask.ext.sqlalchemy import SQLAlchemy
 from models import *
+from json import load
 import hashcash, config, thread, time, requests, ast
+import socks
+import socket
+
+def create_connection(address, timeout=None, source_address=None):
+    sock = socks.socksocket()
+    sock.connect(address)
+    return sock
+
+socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, 'localhost', 9050)
+
+#patch socket module with new create_connection
+socket.socket = socks.socksocket
+socket.create_connection = create_connection
+
+#now import patched urllib2
+from urllib2 import urlopen
+from urllib import urlencode
 
 p2pdb = Flask('p2pdb_server')
 p2pdb.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + config.DATABASE_PATH
@@ -91,19 +109,22 @@ def index():
 
 def update_server(server):
     try:
-        server_route = ast.literal_eval(server.routes)['http']
+        server_route = ast.literal_eval(server.routes)['tor']
     except:
-        print "HTTP route not found for server " + str(server.routes)
+        print "Tor route not found for server " + str(server.routes)
         return
     if server.time_last_updated is None:
         # @todo - implement TOR
-        server_index = requests.get(server_route + "index/").json()
+        #server_index = requests.get(server_route + "index/").json()
+        server_index = load(urlopen(server_route + 'index/'))
         print server_index
         for bucket in server_index['buckets']:
             bucket_object = Bucket.query.filter_by(bucket_id = int(bucket[0])).first()
             hashes = Hash.query.filter_by(hash = bucket[1]).first()
             if hashes is None:
-                r = requests.get(server_route + 'get/', params = {'bucket' : int(bucket_object.bucket_id)}).json()
+                #r = requests.get(server_route + 'get/', params = {'bucket' : int(bucket_object.bucket_id)}).json()
+                params = urlencode({'bucket' : int(bucket_object.bucket_id)})
+                r = load(urlopen(server_route + 'get/', data=params))
                 print r
                 for message in r['entries']:
                     message_object = Message.query.filter_by(payload = message['payload']).first()
@@ -116,7 +137,9 @@ def update_server(server):
                 bucket_object.hashes.append(hash)
                 db.session.commit()
     else:
-        r = requests.get(server_route + 'get/', params = {'seconds_since' : int(time.time() - server.time_last_updated) + 100}).json()
+        #r = requests.get(server_route + 'get/', params = {'seconds_since' : int(time.time() - server.time_last_updated) + 100}).json()
+        params = urlencode({'seconds_since' : int(time.time() - server.time_last_updated) + 100})
+        r = load(urlopen(server_route + 'get/', data=params))
         for message in r['entries']:
             message_object = Message.query.filter_by(payload = message['payload']).first()
             if message_object is None:
@@ -135,11 +158,14 @@ def update_p2p():
         for server in servers:
             # @todo - implement TOR
             try:
-                r = requests.get(ast.literal_eval(server.routes)['http'] + 'hello/', params = payload)
+                #r = requests.get(ast.literal_eval(server.routes)['http'] + 'hello/', params = payload)
+                params = urlencode(payload)
+                r = load(urlopen(ast.literal_eval(server.routes)['tor'] + 'hello/', data=params))
             except:
                 print "Network error on host", server.routes
                 continue
-            json_response = r.json()
+            #json_response = r.json()
+            json_response = r
             for new_server in json_response['servers']:
                 server_route = new_server[0]
                 potential_server = Server.query.filter_by(routes = server_route).first()
@@ -152,6 +178,7 @@ def update_p2p():
         time.sleep(30)
 
 if __name__ == '__main__':
-    host = '0.0.0.0' if config.LISTEN_GLOBALLY else None
+    host = '127.0.0.1' if config.LISTEN_GLOBALLY else None
     thread.start_new_thread(update_p2p, ())
+
     p2pdb.run(host=host, port=config.LISTEN_PORT, debug=config.DEBUG)
