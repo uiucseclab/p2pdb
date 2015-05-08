@@ -22,7 +22,7 @@ socket.socket = socks.socksocket
 socket.create_connection = create_connection
 
 #now import patched urllib2
-from urllib2 import urlopen
+from urllib2 import urlopen, URLError
 from urllib import urlencode
 
 p2pdb = Flask('p2pdb_server')
@@ -161,7 +161,10 @@ def update_p2p():
                 #r = requests.get(ast.literal_eval(server.routes)['http'] + 'hello/', params = payload)
                 params = urlencode(payload)
                 r = load(urlopen(ast.literal_eval(server.routes)['tor'] + 'hello/', data=params))
-            except:
+            except AttributeError as e:
+                print e
+                continue
+            except URLError:
                 print "Network error on host", server.routes
                 continue
             #json_response = r.json()
@@ -179,6 +182,6 @@ def update_p2p():
 
 if __name__ == '__main__':
     host = '127.0.0.1' if config.LISTEN_GLOBALLY else None
-    thread.start_new_thread(update_p2p, ())
+    #thread.start_new_thread(update_p2p, ())
 
     p2pdb.run(host=host, port=config.LISTEN_PORT, debug=config.DEBUG)

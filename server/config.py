@@ -14,8 +14,7 @@ LISTEN_GLOBALLY = True
 # support only url and tor as keys for standard URL and .onion resource
 # locators
 LOCATORS = {
-    'tor' : 'http://hjc7rbogwpbbx7q4.onion:5000',
-    'tor2': 'http://z3qkl4kh35i4k7wa.onion:5000'
+    'tor' : 'http://hjc7rbogwpbbx7q4.onion:5000/',
 }
 
 # List of table keys allowed to be mirrored on this database
